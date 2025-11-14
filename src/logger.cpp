@@ -2,7 +2,7 @@
 #include <cstdarg>
 #include <cstdio>
 
-static void v_log(LogLevel level, const char *msg, va_list args) {
+static void v_log(LogLevel level, std::string_view msg, va_list args) {
     const char *prefix = "";
     FILE *stream = stdout;
 
@@ -20,18 +20,18 @@ static void v_log(LogLevel level, const char *msg, va_list args) {
     }
 
     fprintf(stream, "%s", prefix);
-    vfprintf(stream, msg, args);
+    vfprintf(stream, msg.data(), args);
     fprintf(stream, "\n");
 }
 
-void log(LogLevel level, const char *msg, ...) {
+void log(LogLevel level, std::string_view msg, ...) {
     va_list args;
     va_start(args, msg);
     v_log(level, msg, args);
     va_end(args);
 }
 
-void log_debug(const char *msg, ...) {
+void log_debug(std::string_view msg, ...) {
 #ifndef NDEBUG
     va_list args;
     va_start(args, msg);
@@ -40,14 +40,14 @@ void log_debug(const char *msg, ...) {
 #endif
 }
 
-void log_warning(const char *msg, ...) {
+void log_warning(std::string_view msg, ...) {
     va_list args;
     va_start(args, msg);
     v_log(LogLevel::LOG_WARN, msg, args);
     va_end(args);
 }
 
-void log_error(const char *msg, ...) {
+void log_error(std::string_view msg, ...) {
     va_list args;
     va_start(args, msg);
     v_log(LogLevel::LOG_ERROR, msg, args);
