@@ -20,7 +20,7 @@ static void v_log(LogLevel level, std::string_view msg, va_list args) {
     }
 
     fprintf(stream, "%s", prefix);
-    vfprintf(stream, msg.data(), args);
+    vfprintf(stream, std::string(msg).c_str(), args);
     fprintf(stream, "\n");
 }
 
