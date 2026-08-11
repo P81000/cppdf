@@ -36,9 +36,9 @@ namespace cppdf {
             MuPdfDocument(const MuPdfDocument&) = delete;
             MuPdfDocument& operator=(const MuPdfDocument&) = delete;
 
-            std::expected<void, DocumentError> open(std::string_view path);
-            int get_page_count() const;
-            std::expected<Bitmap, DocumentError> render_page(int page, float zoom = 100.0f);
+            [[nodiscard]] std::expected<void, DocumentError> open(std::string_view path);
+            [[nodiscard]] int get_page_count() const;
+            [[nodiscard]] std::expected<Bitmap, DocumentError> render_page(int page, float zoom = 100.0f);
 
         private:
             std::unique_ptr<fz_context, FzContextDeleter> m_ctx;
