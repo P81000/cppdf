@@ -13,7 +13,7 @@ namespace cppdf {
         fz_register_document_handlers(m_ctx.get());
     }
 
-    std::expected<void, DocumentError> MuPdfDocument::open(std::string_view path) {
+    std::expected<void, cppdf::Error> MuPdfDocument::open(std::string_view path) {
         bool rc = false;
 
         fz_try(m_ctx.get()) {
@@ -29,7 +29,7 @@ namespace cppdf {
             rc = false;
         }
 
-        if (rc == false) return std::unexpected(DocumentError::FileNotFound);
+        if (rc == false) return std::unexpected(cppdf::Error::FileNotFound);
 
         return {};
     }
@@ -38,12 +38,12 @@ namespace cppdf {
         return page_count;
     }
 
-    std::expected<Bitmap, DocumentError> MuPdfDocument::render_page(int page_number, int target_w, int target_h) {
+    std::expected<cppdf::Bitmap, cppdf::Error> MuPdfDocument::rasterize_page(int page_number, int target_w, int target_h) {
         if (page_number < 0 || page_number >= page_count) {
-            return std::unexpected(DocumentError::PageOutOfRange);
+            return std::unexpected(cppdf::Error::PageOutOfRange);
         }
 
-        bool rc = false;
+        bool rc     = false;
         int width   = 0;
         int height  = 0;
         int stride  = 0;
@@ -78,8 +78,8 @@ namespace cppdf {
             rc = false;
         }
 
-        if (rc == false) return std::unexpected(DocumentError::InternalRenderError);
+        if (rc == false) return std::unexpected(cppdf::Error::InternalRenderError);
 
-        return Bitmap { width, height, stride, pixels };
+        return cppdf::Bitmap { width, height, stride, pixels };
     }
 } // namespace cppdf
