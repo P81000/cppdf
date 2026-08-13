@@ -1,4 +1,5 @@
 add_library(cppdf_render 
+    ansi_renderer.cpp
     nearest_scaler.cpp
 )
 

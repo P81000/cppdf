@@ -3,6 +3,7 @@
 
 #include "document/mupdf_document.hpp"
 #include "terminal/terminal_utils.hpp"
+#include "render/ansi_renderer.hpp"
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
@@ -26,12 +27,20 @@ int main(int argc, char* argv[]) {
     cppdf::Terminal term;
     auto term_size = term.get_size();
     if (!term_size.has_value()) {
-        std::print(stderr, "Error: {}\n", term_size.error());
+        std::print(stderr, "Error: {}\n", cppdf::err_msg(term_size.error()));
         return 1;
     }
 
     const auto& info = term_size.value();
     std::print(stdout, "{} {}\n", info.rows, info.cols);
+
+    cppdf::AnsiRenderer renderer;
+    auto bmp = doc.rasterize_page(0, info.cols * 2, info.rows * 4);
+    if (!bmp.has_value()) {
+        std::print(stderr, "Error: {}\n", cppdf::err_msg(bmp.error()));
+        return 1;
+    }
+    renderer.draw(bmp.value(), info.cols, info.rows);
 
     return 0;
 }

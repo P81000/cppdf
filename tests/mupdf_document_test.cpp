@@ -10,7 +10,7 @@ TEST(MuPdfDocumentTest, HandlesInvalidFileGracefully) {
 
     EXPECT_FALSE(result.has_value());
 
-    EXPECT_EQ(result.error(), DocumentError::FileNotFound);
+    EXPECT_EQ(result.error(), Error::FileNotFound);
 }
 
 TEST(MuPdfDocumentTest, PageCountIsZeroWhenEmpty) {
