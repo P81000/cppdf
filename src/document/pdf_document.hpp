@@ -22,10 +22,10 @@ namespace cppdf {
     };
 
     template <typename T>
-        concept PdfDocument = requires(T doc, std::string_view path, int page, float zoom) {
+        concept PdfDocument = requires(T doc, std::string_view path, int page, int target_w, int target_h) {
             { doc.open(path) } -> std::same_as<std::expected<void, DocumentError>>;
             { doc.get_page_count() } -> std::same_as<int>;
-            { doc.render_page(page, zoom) } -> std::same_as<std::expected<Bitmap, DocumentError>>;
+            { doc.render_page(page, target_w, target_h) } -> std::same_as<std::expected<Bitmap, DocumentError>>;
         };
 
 } // namespace cppdf

@@ -38,7 +38,7 @@ namespace cppdf {
         return page_count;
     }
 
-    std::expected<Bitmap, DocumentError> MuPdfDocument::render_page(int page_number, float zoom) {
+    std::expected<Bitmap, DocumentError> MuPdfDocument::render_page(int page_number, int target_w, int target_h) {
         if (page_number < 0 || page_number >= page_count) {
             return std::unexpected(DocumentError::PageOutOfRange);
         }
@@ -51,7 +51,13 @@ namespace cppdf {
 
         fz_try(m_ctx.get()) {
             fz_page *page = fz_load_page(m_ctx.get(), m_doc.get(), page_number);
-            fz_matrix ctm = fz_scale(zoom / 100.0f, zoom / 100.0f);
+            fz_rect bounds = fz_bound_page(m_ctx.get(), page);
+            float pdf_w = bounds.x1 - bounds.x0;
+            float pdf_h = bounds.y1 - bounds.y0;
+            float scale_x = (float)target_w / pdf_w;
+            float scale_y = (float)target_h / pdf_h;
+            float scale = std::min(scale_x, scale_y);
+            fz_matrix ctm = fz_scale(scale, scale);
             fz_pixmap *pixmap = fz_new_pixmap_from_page(m_ctx.get(), page, ctm, fz_device_rgb(m_ctx.get()), 1);
 
             fz_drop_page(m_ctx.get(), page);

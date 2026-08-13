@@ -38,7 +38,7 @@ namespace cppdf {
 
             [[nodiscard]] std::expected<void, DocumentError> open(std::string_view path);
             [[nodiscard]] int get_page_count() const;
-            [[nodiscard]] std::expected<Bitmap, DocumentError> render_page(int page, float zoom = 100.0f);
+            [[nodiscard]] std::expected<Bitmap, DocumentError> render_page(int page, int target_w, int target_h);
 
         private:
             std::unique_ptr<fz_context, FzContextDeleter> m_ctx;
