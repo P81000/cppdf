@@ -1,7 +1,10 @@
+#pragma once
+
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <expected>
-#include <string>
+
+#include "core/error.hpp"
 
 namespace cppdf {
     struct TerminalInfo {
@@ -17,6 +20,6 @@ namespace cppdf {
             Terminal(const Terminal&) = delete;
             Terminal& operator=(const Terminal&) = delete;
 
-            [[nodiscard]] std::expected<TerminalInfo, std::string> get_size() const;
+            [[nodiscard]] std::expected<TerminalInfo, cppdf::Error> get_size() const;
     };
 } // namespace cppdf
