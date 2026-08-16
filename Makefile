@@ -25,7 +25,7 @@ test:
 	@ctest --test-dir build/debug --verbose
 
 clean:
-	@rm -rf build/ bin/
+	@rm -rf build/ bin/ lib/
 
 ## local test
 run:
