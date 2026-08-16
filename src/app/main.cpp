@@ -3,7 +3,7 @@
 
 #include "document/mupdf_document.hpp"
 #include "terminal/terminal_utils.hpp"
-#include "render/ansi_renderer.hpp"
+#include "render/kitty_renderer.hpp"
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
@@ -30,17 +30,58 @@ int main(int argc, char* argv[]) {
         std::print(stderr, "Error: {}\n", cppdf::err_msg(term_size.error()));
         return 1;
     }
-
     const auto& info = term_size.value();
     std::print(stdout, "{} {}\n", info.rows, info.cols);
 
-    cppdf::AnsiRenderer renderer;
-    auto bmp = doc.rasterize_page(0, info.cols * 2, info.rows * 4);
-    if (!bmp.has_value()) {
-        std::print(stderr, "Error: {}\n", cppdf::err_msg(bmp.error()));
+    auto raw_enabled = term.enable_raw_mode();
+    if (!raw_enabled.has_value()) {
+        std::print(stderr, "Error: {}\n", cppdf::err_msg(raw_enabled.error()));
         return 1;
     }
-    renderer.draw(bmp.value(), info.cols, info.rows);
+
+    int current_page = 0;
+    int total_pages = doc.get_page_count();
+
+    cppdf::KittyRenderer renderer;
+    bool running = true;
+    bool dirty = true;
+
+    while (running) {
+        if (dirty) {
+            // Rasteriza em 150 DPI nítido
+            auto bmp = doc.rasterize_page(current_page, 150.0f);
+            if (bmp.has_value()) {
+                renderer.render(bmp.value(), info.cols, info.rows);
+            }
+            dirty = false;
+        }
+
+        char key = term.read_key();
+        switch (key) {
+            case 'q':
+                running = false;
+                break;
+            case 'n': // Próxima página
+            case 'j':
+            case 'l':
+                if (current_page + 1 < total_pages) {
+                    ++current_page;
+                    dirty = true;
+                }
+                break;
+            case 'p': // Página anterior
+            case 'k':
+            case 'h':
+                if (current_page > 0) {
+                    --current_page;
+                    dirty = true;
+                }
+                break;
+            default:
+                break;
+        }
+    }
+    renderer.clear();
 
     return 0;
 }

@@ -1,6 +1,7 @@
+#src/render/CMakeLists.txt
+
 add_library(cppdf_render 
-    ansi_renderer.cpp
-    nearest_scaler.cpp
+    kitty_renderer.cpp
 )
 
 target_include_directories(cppdf_render
