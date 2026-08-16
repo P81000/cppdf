@@ -13,7 +13,7 @@ namespace cppdf {
         fz_register_document_handlers(m_ctx.get());
     }
 
-    std::expected<void, cppdf::Error> MuPdfDocument::open(std::string_view path) {
+    std::expected<void, Error> MuPdfDocument::open(std::string_view path) {
         bool rc = false;
 
         fz_try(m_ctx.get()) {
@@ -29,7 +29,7 @@ namespace cppdf {
             rc = false;
         }
 
-        if (rc == false) return std::unexpected(cppdf::Error::FileNotFound);
+        if (rc == false) return std::unexpected(Error::FileNotFound);
 
         return {};
     }
@@ -38,39 +38,32 @@ namespace cppdf {
         return page_count;
     }
 
-    std::expected<cppdf::Bitmap, cppdf::Error> MuPdfDocument::rasterize_page(int page_number, int target_w, int target_h) {
-        if (page_number < 0 || page_number >= page_count) {
-            return std::unexpected(cppdf::Error::PageOutOfRange);
-        }
+    std::expected<Bitmap, Error> MuPdfDocument::rasterize_page(int page_number, float dpi) {
+        if (page_number < 0 || page_number >= page_count) return std::unexpected(Error::PageOutOfRange);
 
-        bool rc     = false;
-        int width   = 0;
-        int height  = 0;
-        int stride  = 0;
+        bool rc         = false;
+        size_t width    = 0;
+        size_t height   = 0;
+        size_t stride   = 0;
         std::span<const uint8_t> pixels;
 
         fz_try(m_ctx.get()) {
             fz_page *page = fz_load_page(m_ctx.get(), m_doc.get(), page_number);
-            fz_rect bounds = fz_bound_page(m_ctx.get(), page);
-            float pdf_w = bounds.x1 - bounds.x0;
-            float pdf_h = bounds.y1 - bounds.y0;
-            float scale_x = (float)target_w / pdf_w;
-            float scale_y = (float)target_h / pdf_h;
-            float scale = std::min(scale_x, scale_y);
+
+            float scale = dpi / 72.0f;
             fz_matrix ctm = fz_scale(scale, scale);
             fz_pixmap *pixmap = fz_new_pixmap_from_page(m_ctx.get(), page, ctm, fz_device_rgb(m_ctx.get()), 1);
-
             fz_drop_page(m_ctx.get(), page);
 
             m_pix = std::unique_ptr<fz_pixmap, FzPixmapDeleter>(pixmap, FzPixmapDeleter{m_ctx.get()});
 
-            width   = fz_pixmap_width(m_ctx.get(), m_pix.get());
-            height  = fz_pixmap_height(m_ctx.get(), m_pix.get());
-            stride  = fz_pixmap_stride(m_ctx.get(), m_pix.get());
+            width   = static_cast<size_t>(fz_pixmap_width(m_ctx.get(), m_pix.get()));
+            height  = static_cast<size_t>(fz_pixmap_height(m_ctx.get(), m_pix.get()));
+            stride  = static_cast<size_t>(fz_pixmap_stride(m_ctx.get(), m_pix.get()));
 
             pixels = {
                 fz_pixmap_samples(m_ctx.get(), m_pix.get()),
-                static_cast<size_t>(stride * height)
+                stride * height
             };
 
             rc = true;
@@ -78,8 +71,8 @@ namespace cppdf {
             rc = false;
         }
 
-        if (rc == false) return std::unexpected(cppdf::Error::InternalRenderError);
+        if (rc == false) return std::unexpected(Error::InternalRenderError);
 
-        return cppdf::Bitmap { width, height, stride, pixels };
+        return Bitmap { width, height, stride, pixels };
     }
 } // namespace cppdf

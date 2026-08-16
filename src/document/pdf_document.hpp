@@ -8,10 +8,10 @@
 
 namespace cppdf {
     template <typename T>
-        concept PdfDocument = requires(T doc, std::string_view path, int page_number, int target_w, int target_h) {
-            { doc.open(path) } -> std::same_as<std::expected<void, cppdf::Error>>;
+        concept PdfDocument = requires(T doc, std::string_view path, int page_number, float dpi) {
+            { doc.open(path) } -> std::same_as<std::expected<void, Error>>;
             { doc.get_page_count() } -> std::same_as<int>;
-            { doc.rasterize_page(page_number, target_w, target_h) } -> std::same_as<std::expected<cppdf::Bitmap, cppdf::Error>>;
+            { doc.rasterize_page(page_number, dpi) } -> std::same_as<std::expected<Bitmap, Error>>;
         };
 
 } // namespace cppdf
