@@ -5,9 +5,9 @@
 
 namespace cppdf {
     struct Bitmap {
-        int width;
-        int height;
-        int stride;
+        size_t width;
+        size_t height;
+        size_t stride;
         std::span<const uint8_t> pixels;
     };
 } // namespace cppdf
