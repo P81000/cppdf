@@ -51,7 +51,9 @@ namespace cppdf {
 
     char Terminal::read_key() const {
         char c = '\0';
-        ::read(STDIN_FILENO, &c, 1);
+        if (::read(STDIN_FILENO, &c, 1) <= 0) {
+            return '\0';
+        }
         return c;
     }
 
