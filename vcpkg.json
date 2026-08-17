@@ -2,6 +2,10 @@
   "name": "cppdf",
   "version": "0.1.0",
   "dependencies": [
+    {
+      "name": "libjpeg-turbo",
+      "features": ["jpeg8"]
+    },
     "libmupdf"
   ]
 }

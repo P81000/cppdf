@@ -12,6 +12,15 @@ set(CMAKE_CXX_STANDARD          23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS        OFF)
 
+# Enforce GCC 14+ for full C++23 support (<print>)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "14.0")
+    message(FATAL_ERROR
+        "GCC 14.0 or newer is required for full C++23 support (std::print). "
+        "Current version: ${CMAKE_CXX_COMPILER_VERSION}. "
+        "Please build with: CXX=g++-14 make <target>"
+    )
+endif()
+
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
