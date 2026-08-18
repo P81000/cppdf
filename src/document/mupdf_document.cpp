@@ -50,9 +50,18 @@ namespace cppdf {
         fz_try(m_ctx.get()) {
             fz_page *page = fz_load_page(m_ctx.get(), m_doc.get(), page_number);
 
-            float scale = dpi / 72.0f;
-            fz_matrix ctm = fz_scale(scale, scale);
-            fz_pixmap *pixmap = fz_new_pixmap_from_page(m_ctx.get(), page, ctm, fz_device_rgb(m_ctx.get()), 1);
+            fz_rect bounds = fz_bound_page(m_ctx.get(), page);
+            fz_matrix ctm = fz_transform_page(bounds, dpi, 0.0f);
+            fz_irect bbox = fz_round_rect(fz_transform_rect(bounds, ctm));
+
+            fz_pixmap *pixmap = fz_new_pixmap_with_bbox(m_ctx.get(), fz_device_rgb(m_ctx.get()), bbox, nullptr, 1);
+            fz_clear_pixmap_with_value(m_ctx.get(), pixmap, 0xFF);
+
+            fz_device *dev = fz_new_draw_device(m_ctx.get(), fz_identity, pixmap);
+            fz_run_page(m_ctx.get(), page, dev, ctm, nullptr);
+            fz_close_device(m_ctx.get(), dev);
+            fz_drop_device(m_ctx.get(), dev);
+
             fz_drop_page(m_ctx.get(), page);
 
             m_pix = std::unique_ptr<fz_pixmap, FzPixmapDeleter>(pixmap, FzPixmapDeleter{m_ctx.get()});
