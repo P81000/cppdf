@@ -13,6 +13,11 @@ int main(int argc, char* argv[]) {
 
     std::string_view pdf_path = argv[1];
 
+    if (!pdf_path.ends_with(".pdf") && !pdf_path.ends_with(".PDF")) {
+        std::print(stderr, "Error: File must be a .pdf document.\n");
+        return 1;
+    }
+
     cppdf::MuPdfDocument doc;
     cppdf::Terminal term;
     cppdf::KittyRenderer renderer;
@@ -44,7 +49,7 @@ int main(int argc, char* argv[]) {
 
     while (running) {
         if (dirty) {
-            auto bmp = doc.rasterize_page(current_page, 150.0f);
+            auto bmp = doc.rasterize_page(current_page, 100.0f);
             if (bmp.has_value()) {
                 renderer.render(bmp.value(), info.cols, info.rows);
             }
