@@ -14,7 +14,7 @@ namespace cppdf {
             return std::unexpected(Error::TerminalQueryFailed);
         }
 
-        return TerminalInfo{ ws.ws_row, ws.ws_col };
+        return TerminalInfo{ ws.ws_row, ws.ws_col, ws.ws_xpixel, ws.ws_ypixel };
     }
 
     std::expected<void, Error> Terminal::enable_raw_mode() {

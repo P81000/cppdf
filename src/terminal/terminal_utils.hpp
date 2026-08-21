@@ -6,13 +6,9 @@
 #include <termios.h>
 
 #include "core/error.hpp"
+#include "core/types.hpp"
 
 namespace cppdf {
-    struct TerminalInfo {
-        unsigned short rows;
-        unsigned short cols;
-    };
-
     class Terminal {
         public:
             Terminal() = default;
