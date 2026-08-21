@@ -47,11 +47,18 @@ namespace cppdf {
         std::fflush(stdout);
     }
 
-    void KittyRenderer::render(const Bitmap& bmp, size_t target_cols, size_t target_rows) const {
+    void KittyRenderer::render(const Bitmap& bmp, const TerminalInfo& t_info, size_t scroll_y) const {
         if (bmp.pixels.empty() || bmp.width == 0 || bmp.height == 0) return;
 
         std::string payload = base64_encode(bmp.pixels);
         clear();
+
+        auto crop_h = bmp.height;
+        if (t_info.px_height > 0)
+            crop_h = (t_info.px_height * bmp.width) / t_info.px_width;
+
+        auto max_scroll = (bmp.height > crop_h) ? (bmp.height - crop_h) : 0;
+        auto safe_scroll_y = std::min(scroll_y, max_scroll);
 
         static constexpr auto k_chunk_size{4096uz};
         auto offset{0uz};
@@ -66,8 +73,8 @@ namespace cppdf {
             bool has_more = (offset < payload.size());
 
             if (is_first) {
-                auto header = std::format("\033_Ga=T,f=32,s={},v={},c={},r={},m={};",
-                    bmp.width, bmp.height, target_cols, target_rows, (has_more ? 1 : 0)
+                auto header = std::format("\033_Ga=T,f=32,s={},v={},c={},x=0,y={},w={},h={},m={};",
+                    bmp.width, bmp.height, t_info.cols, safe_scroll_y, bmp.width, crop_h, (has_more ? 1 : 0)
                 );
 
                 std::fwrite(header.data(), 1, header.size(), stdout);

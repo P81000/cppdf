@@ -8,7 +8,7 @@
 namespace cppdf {
     class KittyRenderer {
         public:
-            void render(const Bitmap& bmp, size_t target_cols, size_t target_rows) const;
+            void render(const Bitmap& bmp, const TerminalInfo& t_info, size_t scroll_y) const;
 
             void clear() const;
         private:
