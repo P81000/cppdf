@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
         std::print(stderr, "Error: {}\n", cppdf::err_msg(term_size.error()));
         return 1;
     }
-    const auto& info = term_size.value();
+    auto info = term_size.value();
 
     int current_page = 0;
     int total_pages = doc.get_page_count();
@@ -71,6 +71,14 @@ int main(int argc, char* argv[]) {
             case 'q':
                 running = false;
                 break;
+            case 'r': {
+                auto new_size = term.get_size();
+                if (new_size.has_value()) {
+                    info = new_size.value();
+                    needs_redraw = true;
+                }
+                break;
+            }
             case 'j':
                 scroll_y += 100;
                 needs_redraw = true;
