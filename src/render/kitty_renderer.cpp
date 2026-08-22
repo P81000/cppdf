@@ -44,18 +44,18 @@ namespace cppdf {
 
     void KittyRenderer::clear() const {
         std::fwrite("\033_Ga=d,d=A\033\\\033[2J\033[H", 1, 19, stdout);
-        std::fflush(stdout);
     }
 
-    void KittyRenderer::render(const Bitmap& bmp, const TerminalInfo& t_info, size_t scroll_y) const {
+    void KittyRenderer::render(const Bitmap& bmp, size_t target_cols, size_t target_rows, size_t dest_col, size_t dest_row, size_t crop_h, size_t scroll_y) const {
         if (bmp.pixels.empty() || bmp.width == 0 || bmp.height == 0) return;
+
+        std::fwrite("\033[?2026h", 1, 8, stdout);
 
         std::string payload = base64_encode(bmp.pixels);
         clear();
 
-        auto crop_h = bmp.height;
-        if (t_info.px_height > 0)
-            crop_h = (t_info.px_height * bmp.width) / t_info.px_width;
+        auto cursor_seq = std::format("\033[{};{}H", dest_row, dest_col);
+        std::fwrite(cursor_seq.data(), 1, cursor_seq.size(), stdout);
 
         auto max_scroll = (bmp.height > crop_h) ? (bmp.height - crop_h) : 0;
         auto safe_scroll_y = std::min(scroll_y, max_scroll);
@@ -89,6 +89,7 @@ namespace cppdf {
             }
         }
 
+        std::fwrite("\033[?2026l", 1, 8, stdout);
         std::fflush(stdout);
     }
 } // namespace cppdf
