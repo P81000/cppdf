@@ -73,8 +73,8 @@ namespace cppdf {
             bool has_more = (offset < payload.size());
 
             if (is_first) {
-                auto header = std::format("\033_Ga=T,f=32,s={},v={},c={},x=0,y={},w={},h={},m={};",
-                    bmp.width, bmp.height, t_info.cols, safe_scroll_y, bmp.width, crop_h, (has_more ? 1 : 0)
+                auto header = std::format("\033_Ga=T,f=32,s={},v={},c={},r={},x=0,y={},w={},h={},m={};",
+                    bmp.width, bmp.height, target_cols, target_rows, safe_scroll_y, bmp.width, crop_h, (has_more ? 1 : 0)
                 );
 
                 std::fwrite(header.data(), 1, header.size(), stdout);

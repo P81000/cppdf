@@ -45,6 +45,7 @@ int main(int argc, char* argv[]) {
     int total_pages = doc.get_page_count();
 
     auto scroll_y{0uz};
+    float zoom_factor{1.0f};
     bool needs_rasterize = true;
     bool needs_redraw = true;
     std::optional<cppdf::Bitmap> current_bmp;
@@ -62,7 +63,35 @@ int main(int argc, char* argv[]) {
         }
 
         if (needs_redraw && current_bmp.has_value()) {
-            renderer.render(current_bmp.value(), info, scroll_y);
+            const auto& bmp = current_bmp.value();
+
+            size_t target_cols = std::max(1uz, static_cast<size_t>(info.cols * zoom_factor));
+            size_t dest_col = (info.cols > target_cols) ? (info.cols - target_cols) / 2 + 1 : 1;
+
+            float cell_w = static_cast<float>(info.px_width) / info.cols;
+            float cell_h = static_cast<float>(info.px_height) / info.rows;
+
+            float target_px_width = static_cast<float>(target_cols) * cell_w;
+            float target_px_height = target_px_width * (static_cast<float>(bmp.height) / static_cast<float>(bmp.width));
+
+            float precise_rows = target_px_height / cell_h;
+            size_t total_rows = static_cast<size_t>(precise_rows + 0.5f);
+
+            // 3. Float or crop
+            size_t final_target_rows = total_rows;
+            size_t dest_row = 1;
+            size_t crop_h = bmp.height;
+
+            if (total_rows > info.rows) {
+                // Overflow: Fix to top, use all rows, crop source image
+                final_target_rows = info.rows;
+                crop_h = static_cast<size_t>(static_cast<float>(bmp.height) * (static_cast<float>(info.rows) / precise_rows));
+            } else {
+                // Fit: No crop, center vertically (White Sheet float)
+                dest_row = (info.rows - total_rows) / 2 + 1;
+            }
+
+            renderer.render(bmp, target_cols, final_target_rows, dest_col, dest_row, crop_h, scroll_y);
             needs_redraw = false;
         }
 
@@ -104,6 +133,21 @@ int main(int argc, char* argv[]) {
                     scroll_y = 0;
                     needs_rasterize = true;
                 }
+                break;
+            case '+':
+            case '=':
+                zoom_factor = std::min(1.0f, zoom_factor + 0.10f);
+                needs_redraw = true;
+                break;
+            case '-':
+                zoom_factor = std::max(0.10f, zoom_factor - 0.10f);
+                needs_redraw = true;
+                break;
+            case '0':
+                zoom_factor = 1.0f;
+                scroll_y = 0;
+                needs_redraw = true;
+                break;
             default:
                 break;
         }
