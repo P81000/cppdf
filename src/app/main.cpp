@@ -4,6 +4,7 @@
 #include "document/mupdf_document.hpp"
 #include "terminal/terminal_utils.hpp"
 #include "render/kitty_renderer.hpp"
+#include "viewer/viewport.hpp"
 #include "config.hpp"
 
 enum class AppMode {
@@ -22,6 +23,7 @@ struct AppState {
     float zoom_factor{cppdf::INITIAL_ZOOM};
     float dpi{cppdf::DEFAULT_DPI};
     size_t scroll_y{0uz};
+    size_t max_scroll;
     std::optional<cppdf::Bitmap> current_bmp;
 
     AppMode mode{AppMode::Normal};
@@ -38,34 +40,43 @@ void rasterize_current_page(cppdf::MuPdfDocument& doc, cppdf::KittyRenderer& ren
     state.needs_redraw = true;
 }
 
+void render_status_bar(const cppdf::TerminalInfo& info, const AppState& state) {
+    auto cursor_seq = std::format("\033[{};1H", info.rows);
+    std::fwrite(cursor_seq.data(), 1, cursor_seq.size(), stdout);
+
+    std::string left_str = (state.mode == AppMode::Normal) ? " NORMAL " : " COMMAND ";
+
+    size_t max_sc = (state.current_bmp.value().height > info.rows) ? (state.current_bmp.value().height - info.rows) : 0;
+    std::string scroll_pct = (max_sc == 0) ? "All" : (state.scroll_y == 0) ? "Top" : (state.scroll_y == max_sc) ? "Bot" : std::format("{:.0f}%", (static_cast<float>(state.scroll_y) / static_cast<float>(max_sc) * 100));
+
+    std::string right_str = std::format(" page {}/{} | zoom: {:.0f}% | scroll: {}px | {} ",
+                                    state.current_page + 1,
+                                    state.total_pages,
+                                    state.zoom_factor * 100.0f,
+                                    state.scroll_y,
+                                    state.cmd_buff);
+
+    size_t spaces = info.cols - left_str.size() - right_str.size();
+    if (spaces < 0) spaces = 0;
+
+    auto status_text = left_str + std::string(spaces, ' ') + right_str;
+
+    auto final_bar = std::format("\033[7m{}\033[m", status_text);
+
+    std::fwrite(final_bar.data(), 1, final_bar.size(), stdout);
+    std::fflush(stdout);
+}
+
 void render_frame(const cppdf::TerminalInfo& info, const cppdf::KittyRenderer& renderer, AppState& state) {
     if (!state.current_bmp.has_value()) return;
-    const auto& bmp = state.current_bmp.value();
 
-    size_t target_cols = std::max(1uz, static_cast<size_t>(info.cols * state.zoom_factor));
-    size_t dest_col = (info.cols > target_cols) ? (info.cols - target_cols) / 2 + 1 : 1;
+    auto layout = cppdf::calculate_layout(info, state.current_bmp.value(), state.zoom_factor);
 
-    float cell_w = static_cast<float>(info.px_width) / info.cols;
-    float cell_h = static_cast<float>(info.px_height) / info.rows;
+    state.max_scroll = layout.max_scroll;
+    state.scroll_y = std::min(state.scroll_y, layout.max_scroll);
 
-    float target_px_width = static_cast<float>(target_cols) * cell_w;
-    float target_px_height = target_px_width * (static_cast<float>(bmp.height) / static_cast<float>(bmp.width));
-
-    float precise_rows = target_px_height / cell_h;
-    size_t total_rows = static_cast<size_t>(precise_rows + 0.5f);
-
-    size_t final_target_rows = total_rows;
-    size_t dest_row = 1;
-    size_t crop_h = bmp.height;
-
-    if (total_rows > info.rows) {
-        final_target_rows = info.rows;
-        crop_h = static_cast<size_t>(static_cast<float>(bmp.height) * (static_cast<float>(info.rows) / precise_rows));
-    } else {
-        dest_row = (info.rows - total_rows) / 2 + 1;
-    }
-
-    renderer.place(target_cols, final_target_rows, dest_col, dest_row, crop_h, state.scroll_y);
+    renderer.place(layout.target_cols, layout.final_target_rows, layout.dest_col, layout.dest_row, layout.crop_h, state.scroll_y);
+    render_status_bar(info, state);
     state.needs_redraw = false;
 }
 
@@ -128,7 +139,6 @@ void handle_input(cppdf::Terminal& term, cppdf::TerminalInfo& info, AppState& st
 
         case '0':
                   state.zoom_factor = cppdf::INITIAL_ZOOM;
-                  state.scroll_y = 0;
                   state.needs_redraw = true;
                   break;
 
