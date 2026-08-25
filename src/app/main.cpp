@@ -57,6 +57,7 @@ int main(int argc, char* argv[]) {
             auto bmp = doc.rasterize_page(current_page, 200.0f);
             if (bmp.has_value()) {
                 current_bmp = std::move(bmp.value());
+                renderer.upload(current_bmp.value());
             }
             needs_rasterize = false;
             needs_redraw = true;
@@ -91,7 +92,7 @@ int main(int argc, char* argv[]) {
                 dest_row = (info.rows - total_rows) / 2 + 1;
             }
 
-            renderer.render(bmp, target_cols, final_target_rows, dest_col, dest_row, crop_h, scroll_y);
+            renderer.place(target_cols, final_target_rows, dest_col, dest_row, crop_h, scroll_y);
             needs_redraw = false;
         }
 
