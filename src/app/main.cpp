@@ -113,7 +113,7 @@ int main(int argc, char* argv[]) {
             render_frame(info, renderer, state);
 
         char key = term.read_key();
-        navigator.process_key(key, term, info, state);
+        if (!navigator.process_key(key, term, info, state)) state.running = false;
     }
 
     renderer.clear();
