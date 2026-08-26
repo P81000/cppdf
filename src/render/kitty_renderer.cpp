@@ -12,7 +12,7 @@ namespace cppdf {
         std::string encoded;
         encoded.reserve(((data.size() + 2) / 3) * 4);
 
-        auto i{0uz};
+        size_t i = 0uz;
         while (i + 2 < data.size()) {
             uint32_t octet = static_cast<uint32_t>((data[i] << 16) | (data[i + 1] << 8) | data[i + 2]);
 
@@ -54,13 +54,13 @@ namespace cppdf {
             std::fwrite(del.data(), 1, del.size(), stdout);
         }
 
-        m_image_id = 1;
-        m_src_width = bmp.width;
-        m_src_height = bmp.height;
+        m_image_id      = 1;
+        m_src_width     = bmp.width;
+        m_src_height    = bmp.height;
 
         std::string payload = base64_encode(bmp.pixels);
-        static constexpr auto k_chunk_size{4096uz};
-        auto offset{0uz};
+        static constexpr size_t k_chunk_size = 4096uz;
+        size_t offset = 0uz;
         bool is_first = true;
 
         while (offset < payload.size()) {

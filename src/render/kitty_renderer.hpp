@@ -18,9 +18,9 @@ namespace cppdf {
 
             static constexpr uint32_t k_rgb32_format = 32;
 
-            uint32_t m_image_id{0};
-            size_t m_src_height{0};
-            size_t m_src_width{0};
+            uint32_t m_image_id = 0;
+            size_t m_src_height = 0;
+            size_t m_src_width = 0;
 
     };
 } // namespace cppdf

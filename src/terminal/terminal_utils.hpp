@@ -19,8 +19,8 @@ namespace cppdf {
 
             [[nodiscard]] std::expected<TerminalInfo, Error> get_size() const;
             [[nodiscard]] std::expected<void, Error> enable_raw_mode();
-            void disable_raw_mode();
             [[nodiscard]] char read_key() const;
+            void disable_raw_mode();
 
         private:
             struct termios m_orig_termios{};

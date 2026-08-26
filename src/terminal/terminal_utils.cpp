@@ -56,5 +56,4 @@ namespace cppdf {
         }
         return c;
     }
-
 } // namespace cppdf

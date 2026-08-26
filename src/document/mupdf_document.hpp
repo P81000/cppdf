@@ -41,8 +41,8 @@ namespace cppdf {
             [[nodiscard]] int get_page_count() const;
             [[nodiscard]] std::expected<Bitmap, Error> rasterize_page(int page_number, float dpi);
 
+            [[nodiscard]] std::string get_last_warning() const { return std::string(last_error_msg); }
             void set_last_warning(const char* message);
-            std::string get_last_warning() const { return std::string(last_error_msg); }
             void clear_warning() { last_error_msg = ""; }
 
         private:
@@ -50,7 +50,7 @@ namespace cppdf {
             std::unique_ptr<fz_document, FzDocumentDeleter> m_doc;
             std::unique_ptr<fz_pixmap, FzPixmapDeleter> m_pix;
 
-            std::string last_error_msg{""};
+            std::string last_error_msg = "";
 
             int page_count = 0;
     };

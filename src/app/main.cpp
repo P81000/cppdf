@@ -29,11 +29,10 @@ void render_status_bar(const cppdf::TerminalInfo& info, const AppState& state) {
     std::fwrite(cursor_seq.data(), 1, cursor_seq.size(), stdout);
 
     std::string left_str;
-    if (!state.ui_message.empty()) {
+    if (!state.ui_message.empty())
         left_str = std::format(" WARNING: {} ", state.ui_message);
-    } else {
+    else
         left_str = (state.mode == AppMode::Normal) ? " NORMAL " : std::format(":{}", state.cmd_buff);
-    }
 
     std::string right_str = std::format(" page {}/{} | zoom: {:.0f}% | scroll: {}px | {} ",
                                     state.current_page + 1,
@@ -73,7 +72,6 @@ int main(int argc, char* argv[]) {
     }
 
     std::string_view pdf_path = argv[1];
-
     if (!pdf_path.ends_with(".pdf") && !pdf_path.ends_with(".PDF")) {
         std::print(stderr, "Error: File must be a .pdf document.\n");
         return 1;
@@ -113,7 +111,8 @@ int main(int argc, char* argv[]) {
             render_frame(info, renderer, state);
 
         char key = term.read_key();
-        if (!navigator.process_key(key, term, info, state)) state.running = false;
+        if (!navigator.process_key(key, term, info, state))
+            state.running = false;
     }
 
     renderer.clear();
