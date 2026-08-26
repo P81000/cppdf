@@ -1,34 +1,12 @@
-#include <string_view>
 #include <print>
 
 #include "document/mupdf_document.hpp"
 #include "terminal/terminal_utils.hpp"
 #include "render/kitty_renderer.hpp"
+#include "navigation/navigator.hpp"
 #include "viewer/viewport.hpp"
 #include "config.hpp"
-
-enum class AppMode {
-    Normal,
-    Command,
-    Search // TODO: TO IMPLEMENT LATER
-};
-
-struct AppState {
-    bool running{true};
-    bool needs_rasterize{true};
-    bool needs_redraw{true};
-
-    int current_page{0};
-    int total_pages{0};
-    float zoom_factor{cppdf::INITIAL_ZOOM};
-    float dpi{cppdf::DEFAULT_DPI};
-    size_t scroll_y{0uz};
-    size_t max_scroll;
-    std::optional<cppdf::Bitmap> current_bmp;
-
-    AppMode mode{AppMode::Normal};
-    std::string cmd_buff{""};
-};
+#include "state.hpp"
 
 void rasterize_current_page(cppdf::MuPdfDocument& doc, cppdf::KittyRenderer& renderer, AppState& state) {
     auto bmp = doc.rasterize_page(state.current_page, state.dpi);
