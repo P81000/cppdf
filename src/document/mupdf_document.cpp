@@ -4,6 +4,15 @@
 #include "mupdf_document.hpp"
 
 namespace cppdf {
+    static void mupdf_warning_callback(void *user_data, const char* message) {
+        auto* doc = static_cast<MuPdfDocument*>(user_data);
+        doc->set_last_warning(message);
+    }
+
+    void MuPdfDocument::set_last_warning(const char* message) {
+        last_error_msg = message;
+    }
+
     MuPdfDocument::MuPdfDocument() {
         m_ctx.reset(fz_new_context(nullptr, nullptr, FZ_STORE_UNLIMITED));
         if (!m_ctx) {
@@ -11,6 +20,7 @@ namespace cppdf {
         }
 
         fz_register_document_handlers(m_ctx.get());
+        fz_set_warning_callback(m_ctx.get(), mupdf_warning_callback, this);
     }
 
     std::expected<void, Error> MuPdfDocument::open(std::string_view path) {

@@ -2,6 +2,7 @@
 
 #include <mupdf/fitz.h>
 #include <memory>
+#include <string>
 
 #include "pdf_document.hpp"
 
@@ -40,10 +41,16 @@ namespace cppdf {
             [[nodiscard]] int get_page_count() const;
             [[nodiscard]] std::expected<Bitmap, Error> rasterize_page(int page_number, float dpi);
 
+            void set_last_warning(const char* message);
+            std::string get_last_warning() const { return std::string(last_error_msg); }
+            void clear_warning() { last_error_msg = ""; }
+
         private:
             std::unique_ptr<fz_context, FzContextDeleter> m_ctx;
             std::unique_ptr<fz_document, FzDocumentDeleter> m_doc;
             std::unique_ptr<fz_pixmap, FzPixmapDeleter> m_pix;
+
+            std::string last_error_msg{""};
 
             int page_count = 0;
     };

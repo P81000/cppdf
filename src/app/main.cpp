@@ -5,11 +5,17 @@
 #include "render/kitty_renderer.hpp"
 #include "navigation/navigator.hpp"
 #include "viewer/viewport.hpp"
-#include "config.hpp"
 #include "state.hpp"
 
 void rasterize_current_page(cppdf::MuPdfDocument& doc, cppdf::KittyRenderer& renderer, AppState& state) {
     auto bmp = doc.rasterize_page(state.current_page, state.dpi);
+    std::string warning = doc.get_last_warning();
+
+    if (!warning.empty()) {
+        state.ui_message = warning;
+        doc.clear_warning();
+    }
+
     if (bmp.has_value()) {
         state.current_bmp = std::move(bmp.value());
         renderer.upload(state.current_bmp.value());
@@ -22,17 +28,19 @@ void render_status_bar(const cppdf::TerminalInfo& info, const AppState& state) {
     auto cursor_seq = std::format("\033[{};1H", info.rows);
     std::fwrite(cursor_seq.data(), 1, cursor_seq.size(), stdout);
 
-    std::string left_str = (state.mode == AppMode::Normal) ? " NORMAL " : " COMMAND ";
-
-    size_t max_sc = (state.current_bmp.value().height > info.rows) ? (state.current_bmp.value().height - info.rows) : 0;
-    std::string scroll_pct = (max_sc == 0) ? "All" : (state.scroll_y == 0) ? "Top" : (state.scroll_y == max_sc) ? "Bot" : std::format("{:.0f}%", (static_cast<float>(state.scroll_y) / static_cast<float>(max_sc) * 100));
+    std::string left_str;
+    if (!state.ui_message.empty()) {
+        left_str = std::format(" WARNING: {} ", state.ui_message);
+    } else {
+        left_str = (state.mode == AppMode::Normal) ? " NORMAL " : std::format(":{}", state.cmd_buff);
+    }
 
     std::string right_str = std::format(" page {}/{} | zoom: {:.0f}% | scroll: {}px | {} ",
                                     state.current_page + 1,
                                     state.total_pages,
                                     state.zoom_factor * 100.0f,
                                     state.scroll_y,
-                                    state.cmd_buff);
+                                    (state.mode == AppMode::Normal) ? state.cmd_buff : " ");
 
     size_t spaces = info.cols - left_str.size() - right_str.size();
     if (spaces < 0) spaces = 0;
