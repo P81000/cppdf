@@ -58,73 +58,6 @@ void render_frame(const cppdf::TerminalInfo& info, const cppdf::KittyRenderer& r
     state.needs_redraw = false;
 }
 
-void handle_input(cppdf::Terminal& term, cppdf::TerminalInfo& info, AppState& state) {
-    char key = term.read_key();
-    switch(key) {
-        case 'q':
-            state.running = false;
-            break;
-
-        case 'r': {
-                      auto new_size = term.get_size();
-                      if (new_size.has_value()) {
-                          info = new_size.value();
-                          state.needs_redraw = true;
-                      }
-                      break;
-                  }
-
-        case 'j':
-                  state.scroll_y += cppdf::SCROLL_STEP;
-                  state.needs_redraw = true;
-                  break;
-
-        case 'k':
-                  if (state.scroll_y > 100) state.scroll_y -= cppdf::SCROLL_STEP;
-                  else state.scroll_y = 0;
-                  state.needs_redraw = true;
-                  break;
-
-        case 'l':
-        case 'n':
-        case ' ':
-                  if (state.current_page + 1 < state.total_pages) {
-                      ++state.current_page;
-                      state.scroll_y = 0;
-                      state.needs_rasterize = true;
-                  }
-                  break;
-
-        case 'h':
-        case 'p':
-                  if (state.current_page > 0) {
-                      --state.current_page;
-                      state.scroll_y = 0;
-                      state.needs_rasterize = true;
-                  }
-                  break;
-
-        case '+':
-        case '=':
-                  state.zoom_factor = std::min(cppdf::MAX_ZOOM, state.zoom_factor + cppdf::ZOOM_STEP);
-                  state.needs_redraw = true;
-                  break;
-
-        case '-':
-                  state.zoom_factor = std::max(cppdf::MIN_ZOOM, state.zoom_factor - cppdf::MIN_ZOOM);
-                  state.needs_redraw = true;
-                  break;
-
-        case '0':
-                  state.zoom_factor = cppdf::INITIAL_ZOOM;
-                  state.needs_redraw = true;
-                  break;
-
-        default:
-                  break;
-    }
-}
-
 int main(int argc, char* argv[]) {
     if (argc < 2) {
         std::print(stderr, "Usage: cppdf <path_to_pdf>\n");
@@ -141,6 +74,7 @@ int main(int argc, char* argv[]) {
     cppdf::MuPdfDocument doc;
     cppdf::Terminal term;
     cppdf::KittyRenderer renderer;
+    cppdf::Navigator navigator;
     AppState state;
 
     auto result = doc.open(pdf_path);
@@ -170,7 +104,8 @@ int main(int argc, char* argv[]) {
         if (state.needs_redraw && state.current_bmp.has_value())
             render_frame(info, renderer, state);
 
-        handle_input(term, info, state);
+        char key = term.read_key();
+        navigator.process_key(key, term, info, state);
     }
 
     renderer.clear();
